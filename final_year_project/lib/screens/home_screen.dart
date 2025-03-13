@@ -74,14 +74,14 @@ class HomeScreen extends StatelessWidget {
   void _navigateToFoodLog(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const FoodLogScreen()),
+      MaterialPageRoute(builder: (context) => const FoodScreen()),
     );
   }
 
   void _navigateToExerciseLog(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ExerciseLogScreen()),
+      MaterialPageRoute(builder: (context) => const ExerciseScreen()),
     );
   }
 }
