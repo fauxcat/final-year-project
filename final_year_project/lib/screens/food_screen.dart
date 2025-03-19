@@ -10,8 +10,22 @@ class FoodScreen extends StatefulWidget {
 class _FoodScreenState extends State<FoodScreen> {
   // Dummy data - replace with real data later
   final List<Map<String, dynamic>> _foodItems = [
-    {'name': 'Sandwich', 'mass': '365g', 'calories': '658kCal'},
-    {'name': 'Milkshake', 'mass': '500g', 'calories': '398kCal'},
+    {
+      'name': 'Sandwich',
+      'mass': 365.0,
+      'calories': 658.0,
+      'protein': 30.0,
+      'carbs': 50.0,
+      'fats': 20.0
+    },
+    {
+      'name': 'Milkshake',
+      'mass': 500.0,
+      'calories': 398.0,
+      'protein': 8.0,
+      'carbs': 62.0,
+      'fats': 12.0
+    },
   ];
 
   final Map<String, dynamic> _macros = {
@@ -19,6 +33,27 @@ class _FoodScreenState extends State<FoodScreen> {
     'carbs': {'current': 220, 'goal': 195},
     'fats': {'current': 38, 'goal': 60},
   };
+
+  Map<String, double> _calculateTotals() {
+    double totalCalories = 0;
+    double totalProtein = 0;
+    double totalCarbs = 0;
+    double totalFats = 0;
+
+    for (var item in _foodItems) {
+      totalCalories += item['calories'];
+      totalProtein += item['protein'];
+      totalCarbs += item['carbs'];
+      totalFats += item['fats'];
+    }
+
+    return {
+      'calories': totalCalories,
+      'protein': totalProtein,
+      'carbs': totalCarbs,
+      'fats': totalFats,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,10 +89,11 @@ class _FoodScreenState extends State<FoodScreen> {
   }
 
   Widget _buildCalorieHeader() {
-    return const Center(
+    final totals = _calculateTotals();
+    return Center(
       child: Text(
-        '1800/2000 Calories',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        '${totals['calories']!.round()}/${_macros['calorieGoal']} Calories',
+        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -85,8 +121,10 @@ class _FoodScreenState extends State<FoodScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(item['name'], style: const TextStyle(fontSize: 20)),
-            Text(item['mass'], style: const TextStyle(fontSize: 20)),
-            Text(item['calories'], style: const TextStyle(fontSize: 20)),
+            Text('${item['mass'].round()}g',
+                style: const TextStyle(fontSize: 20)),
+            Text('${item['calories'].round()}kCal',
+                style: const TextStyle(fontSize: 20)),
           ],
         ),
       ),
@@ -123,7 +161,7 @@ class _FoodScreenState extends State<FoodScreen> {
               value: current / goal,
               backgroundColor: Colors.grey[200],
               valueColor: AlwaysStoppedAnimation<Color>(
-                  current > goal ? Colors.red : Colors.blue),
+                  current > goal ? Colors.green : Colors.blue),
             ),
           ),
           Expanded(
@@ -131,7 +169,7 @@ class _FoodScreenState extends State<FoodScreen> {
             child: Text('$current/${goal}g',
                 textAlign: TextAlign.right,
                 style: TextStyle(
-                    color: current > goal ? Colors.red : Colors.white)),
+                    color: current > goal ? Colors.green : Colors.white)),
           ),
         ],
       ),
@@ -147,15 +185,90 @@ class _FoodScreenState extends State<FoodScreen> {
   }
 
   void _showItemOptions(Map<String, dynamic> item) {
+    // Store original values as doubles
+    final originalMass = item['mass'].toDouble();
+    final originalCalories = item['calories'].toDouble();
+    final originalProtein = item['protein'].toDouble();
+    final originalCarbs = item['carbs'].toDouble();
+    final originalFats = item['fats'].toDouble();
+
+    final TextEditingController massController = TextEditingController(
+      text: item['mass'].toStringAsFixed(0),
+    );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(item['name']),
-        actions: [
-          TextButton(onPressed: () {}, child: const Text('Edit Mass')),
-          TextButton(onPressed: () {}, child: const Text('Macronutrients')),
-          TextButton(onPressed: () {}, child: const Text('Delete')),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, dialogSetState) => AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: Text(
+            item['name'],
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Calories: ${item['calories'].round()} kCal',
+                  style: const TextStyle(color: Colors.white)),
+              Text('Protein: ${item['protein'].round()} g',
+                  style: const TextStyle(color: Colors.white)),
+              Text('Carbs: ${item['carbs'].round()} g',
+                  style: const TextStyle(color: Colors.white)),
+              Text('Fats: ${item['fats'].round()} g',
+                  style: const TextStyle(color: Colors.white)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: massController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Mass (g)',
+                  labelStyle: TextStyle(color: Colors.white),
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  if (value.isEmpty) return;
+                  try {
+                    final newMass = double.parse(value);
+                    final scaleFactor = newMass / originalMass;
+
+                    // Update dialog UI
+                    dialogSetState(() {
+                      item['mass'] = newMass;
+                      item['calories'] =
+                          (originalCalories * scaleFactor).round();
+                      item['protein'] = (originalProtein * scaleFactor).round();
+                      item['carbs'] = (originalCarbs * scaleFactor).round();
+                      item['fats'] = (originalFats * scaleFactor).round();
+                    });
+
+                    // Update parent UI
+                    setState(() {}); // This triggers FoodScreen rebuild
+                  } catch (e) {
+                    // Handle invalid input
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Update parent state
+                setState(() {
+                  _foodItems.remove(item);
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Save', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
       ),
     );
   }
