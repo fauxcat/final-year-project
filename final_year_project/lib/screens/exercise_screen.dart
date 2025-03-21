@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Placeholder for now
 class ExerciseScreen extends StatelessWidget {
   const ExerciseScreen({Key? key}) : super(key: key);
 

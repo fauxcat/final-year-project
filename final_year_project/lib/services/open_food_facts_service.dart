@@ -1,40 +1,60 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:uuid/uuid.dart';
+import 'package:openfoodfacts/openfoodfacts.dart';
 import '../models/food_item.dart';
 
 class OpenFoodFactsService {
-  static const String _baseUrl =
-      'https://world.openfoodfacts.org/cgi/search.pl';
-  static const int _pageSize = 10;
-
   Future<List<FoodItem>> searchFoods(String query) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl?'
-            'search_terms=${Uri.encodeQueryComponent(query)}&'
-            'page_size=$_pageSize&'
-            'json=1&'
-            'fields=product_name,nutriments'),
+      final parameters = ProductSearchQueryConfiguration(
+        parametersList: [
+          SearchTerms(terms: [query])
+        ],
+        language: OpenFoodFactsLanguage.ENGLISH,
+        version: ProductQueryVersion.v3,
+        fields: [ProductField.ALL],
       );
 
-      if (response.statusCode == 200) {
-        return _parseResults(response.body);
-      }
-      return [];
-    } catch (e) {
+      OpenFoodAPIConfiguration.userAgent = UserAgent(
+        name: 'Tracker App',
+      );
+
+      final result = await OpenFoodAPIClient.searchProducts(
+        null,
+        parameters,
+      );
+
+      return result.products?.map((product) {
+            final nutriments = product.nutriments;
+            return FoodItem(
+              name: product.productName?.trim() ?? 'Unnamed Food',
+              mass: 100,
+              caloriesPer100g: nutriments?.getValue(
+                    Nutrient.energyKCal,
+                    PerSize.oneHundredGrams,
+                  ) ??
+                  0,
+              proteinPer100g: nutriments?.getValue(
+                    Nutrient.proteins,
+                    PerSize.oneHundredGrams,
+                  ) ??
+                  0,
+              carbsPer100g: nutriments?.getValue(
+                    Nutrient.carbohydrates,
+                    PerSize.oneHundredGrams,
+                  ) ??
+                  0,
+              fatsPer100g: nutriments?.getValue(
+                    Nutrient.fat,
+                    PerSize.oneHundredGrams,
+                  ) ??
+                  0,
+              date: DateTime.now(),
+            );
+          }).toList() ??
+          [];
+    } catch (e, stackTrace) {
       print('Search error: $e');
+      print('Stack trace: $stackTrace');
       return [];
     }
-  }
-
-  List<FoodItem> _parseResults(String responseBody) {
-    final jsonData = jsonDecode(responseBody);
-    final products = jsonData['products'] as List<dynamic>? ?? [];
-
-    return products
-        .where((p) => p['product_name'] != null)
-        .map((product) => FoodItem.fromJson(product))
-        .toList();
   }
 }

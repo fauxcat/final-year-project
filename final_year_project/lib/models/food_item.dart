@@ -1,60 +1,70 @@
+import 'package:hive/hive.dart';
+
+part 'food_item.g.dart';
+
+// Used for storing food items in Hive
+
+@HiveType(typeId: 0) // this id identifies the FoodItem class in Hive
 class FoodItem {
+  @HiveField(0)
   final String name;
+
+  @HiveField(1)
   final double mass;
-  final double carbs;
-  final double protein;
-  final double fats;
-  final double calories;
+
+  @HiveField(2)
+  final double caloriesPer100g; // Stored as per 100g values
+
+  @HiveField(3)
+  final double proteinPer100g;
+
+  @HiveField(4)
+  final double carbsPer100g;
+
+  @HiveField(5)
+  final double fatsPer100g;
+
+  @HiveField(6)
+  final DateTime date;
+
+  @HiveField(7)
+  final int? key; // Unique key for each food item
 
   FoodItem({
     required this.name,
     required this.mass,
-    required this.carbs,
-    required this.protein,
-    required this.fats,
-    required this.calories,
+    required this.caloriesPer100g,
+    required this.proteinPer100g,
+    required this.carbsPer100g,
+    required this.fatsPer100g,
+    required this.date,
+    this.key,
   });
 
-  factory FoodItem.fromJson(Map<String, dynamic> json) {
-    final nutriments = json['nutriments'] ?? {};
+  double get calories => (caloriesPer100g * mass) / 100;
+  double get protein => (proteinPer100g * mass) / 100;
+  double get carbs => (carbsPer100g * mass) / 100;
+  double get fats => (fatsPer100g * mass) / 100;
+
+  FoodItem copyWith({
+    String? name,
+    double? mass,
+    double? caloriesPer100g,
+    double? proteinPer100g,
+    double? carbsPer100g,
+    double? fatsPer100g,
+    DateTime? date,
+    int? key,
+  }) {
     return FoodItem(
-      name: json['product_name'] ?? 'Unknown Food',
-      mass: 100.0, // Default to 100g base
-      carbs: _parseDouble(nutriments['carbohydrates_100g']),
-      protein: _parseDouble(nutriments['proteins_100g']),
-      fats: _parseDouble(nutriments['fat_100g']),
-      calories: _parseDouble(nutriments['energy-kcal_100g']),
+      name: name ?? this.name,
+      mass: mass ?? this.mass,
+      caloriesPer100g: caloriesPer100g ?? this.caloriesPer100g,
+      proteinPer100g: proteinPer100g ?? this.proteinPer100g,
+      carbsPer100g: carbsPer100g ?? this.carbsPer100g,
+      fatsPer100g: fatsPer100g ?? this.fatsPer100g,
+      date: date ?? this.date,
+      key: key ?? this.key,
     );
-  }
-
-  static double _parseDouble(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;
-  }
-
-  FoodItem copyWithMass(double newMass) {
-    final ratio = newMass / mass;
-    return FoodItem(
-      name: name,
-      mass: newMass,
-      carbs: carbs * ratio,
-      protein: protein * ratio,
-      fats: fats * ratio,
-      calories: calories * ratio,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'mass': mass,
-      'carbs': carbs,
-      'protein': protein,
-      'fats': fats,
-      'calories': calories,
-    };
   }
 }

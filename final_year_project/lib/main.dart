@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For setting window size
-import 'screens/home_screen.dart';
-import 'screens/food_screen.dart';
-import 'screens/exercise_screen.dart';
+import 'package:flutter/services.dart'; // To set window size
+import 'services/hive_service.dart'; // To initialise Hive
+import 'screens/home_screen.dart'; // To load to home screen on startup
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await HiveService.init(); // Initialize Hive
 
   runApp(const FitnessTrackerApp());
 }
@@ -24,42 +21,38 @@ class FitnessTrackerApp extends StatelessWidget {
       title: 'Fitness Tracker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.grey, // Primary color for buttons, app bar, etc.
-        scaffoldBackgroundColor: const Color.fromARGB(
-            255, 26, 26, 26), // Set background to dark grey
+        // Lots of styling, not important
+        primarySwatch: Colors.grey,
+        scaffoldBackgroundColor: const Color.fromARGB(255, 26, 26, 26),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.black, // Set app bar background to black
-          foregroundColor: Colors.white, // Set app bar text/icons to white
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
         ),
         textTheme: const TextTheme(
-          bodyLarge:
-              TextStyle(color: Colors.white), // Set default text color to white
+          bodyLarge: TextStyle(color: Colors.white),
           bodyMedium: TextStyle(color: Colors.white),
         ),
         useMaterial3: true,
         // Customize button themes
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                Colors.grey[800], // Grey background for ElevatedButton
-            foregroundColor: Colors.white, // White text for ElevatedButton
+            backgroundColor: Colors.grey[800],
+            foregroundColor: Colors.white,
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: Colors.grey[300], // Light grey text for TextButton
+            foregroundColor: Colors.grey[300],
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor:
-                Colors.grey[300], // Light grey text for OutlinedButton
-            side: BorderSide(
-                color: Colors.grey[700]!), // Grey border for OutlinedButton
+            foregroundColor: Colors.grey[300],
+            side: BorderSide(color: Colors.grey[700]!),
           ),
         ),
       ),
-      home: const MainNavigationWrapper(), // Use a wrapper for navigation
+      home: const MainNavigationWrapper(),
     );
   }
 }
@@ -78,8 +71,8 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   // List of screens
   final List<Widget> _screens = [
     const HomeScreen(),
-    const PlaceholderScreen(title: 'Progress'), // Placeholder for Progress
-    const PlaceholderScreen(title: 'Goals'), // Placeholder for Goals
+    const PlaceholderScreen(title: 'Progress'), // Placeholder for progress
+    const PlaceholderScreen(title: 'Goals'), // Placeholder for goals
   ];
 
   void _onItemTapped(int index) {
@@ -91,7 +84,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex], // Display the selected screen
+      body: _screens[_selectedIndex], // Display selected screen
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -102,14 +95,14 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
           BottomNavigationBarItem(icon: Icon(Icons.flag), label: 'Goals'),
         ],
         backgroundColor: Colors.black, // Nav bar background
-        selectedItemColor: Colors.white, // Selected item color
-        unselectedItemColor: Colors.grey, // Unselected item color
+        selectedItemColor: Colors.white, // Selected item colour
+        unselectedItemColor: Colors.grey, // Unselected item colour
       ),
     );
   }
 }
 
-// Placeholder screen for unimplemented pages
+// Placeholder screen for progress and goals
 class PlaceholderScreen extends StatelessWidget {
   final String title;
 
