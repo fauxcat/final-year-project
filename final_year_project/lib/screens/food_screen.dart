@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/food_item.dart';
+import '../services/open_food_facts_service.dart';
 
 class FoodScreen extends StatefulWidget {
   const FoodScreen({super.key});
@@ -120,11 +122,11 @@ class _FoodScreenState extends State<FoodScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(item['name'], style: const TextStyle(fontSize: 20)),
+            Text(item['name'], style: const TextStyle(fontSize: 12)),
             Text('${item['mass'].round()}g',
-                style: const TextStyle(fontSize: 20)),
+                style: const TextStyle(fontSize: 12)),
             Text('${item['calories'].round()}kCal',
-                style: const TextStyle(fontSize: 20)),
+                style: const TextStyle(fontSize: 12)),
           ],
         ),
       ),
@@ -176,12 +178,21 @@ class _FoodScreenState extends State<FoodScreen> {
     );
   }
 
-  void _addFoodItem() {
-    // TODO: Implement add food
-    showModalBottomSheet(
+  void _addFoodItem() async {
+    final newFood = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
+      isScrollControlled: true,
       builder: (context) => const AddFoodSheet(),
     );
+
+    if (newFood != null) {
+      setState(() {
+        _foodItems.add(newFood);
+      });
+
+      // Force UI refresh for macros
+      _calculateTotals();
+    }
   }
 
   void _showItemOptions(Map<String, dynamic> item) {
@@ -327,36 +338,194 @@ class _FoodScreenState extends State<FoodScreen> {
   }
 }
 
-class AddFoodSheet extends StatelessWidget {
+class AddFoodSheet extends StatefulWidget {
   const AddFoodSheet({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Add Food Item',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          const TextField(
-            decoration: InputDecoration(
-              labelText: 'Search for food',
-              border: OutlineInputBorder(),
+  State<AddFoodSheet> createState() => _AddFoodSheetState();
+}
+
+class _AddFoodSheetState extends State<AddFoodSheet> {
+  final OpenFoodFactsService _apiService = OpenFoodFactsService();
+  final TextEditingController _searchController = TextEditingController();
+  List<FoodItem> _searchResults = [];
+  bool _isSearching = false;
+  String? _errorMessage;
+
+  Future<void> _performSearch(String query) async {
+    if (query.isEmpty) return;
+
+    setState(() {
+      _isSearching = true;
+      _errorMessage = null;
+      _searchResults = [];
+    });
+
+    try {
+      final results = await _apiService.searchFoods(query);
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isSearching = false;
+        _errorMessage = 'Failed to search foods: ${e.toString()}';
+      });
+    }
+  }
+
+  void _handleFoodSelection(FoodItem food, BuildContext context) {
+    final TextEditingController massController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: Text(
+          "Add ${food.name}",
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildNutritionInfoRow('Calories', '${food.calories.round()} kcal'),
+            _buildNutritionInfoRow('Carbs', '${food.carbs.round()}g'),
+            _buildNutritionInfoRow('Protein', '${food.protein.round()}g'),
+            _buildNutritionInfoRow('Fats', '${food.fats.round()}g'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: massController,
+              style: const TextStyle(color: Colors.white),
+              cursorColor: Colors.white,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Mass (grams)',
+                labelStyle: TextStyle(color: Colors.white),
+                border: OutlineInputBorder(),
+              ),
             ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: Navigator.of(context).pop,
+            child: const Text('Cancel'),
           ),
-          const SizedBox(height: 20),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+            ),
             onPressed: () {
-              // Placeholder for adding food
-              Navigator.pop(context); // Close the sheet
+              final mass = double.tryParse(massController.text) ?? 0;
+              if (mass > 0) {
+                final adjustedFood = food.copyWithMass(mass);
+
+                // Close both dialog and bottom sheet
+                Navigator.pop(context);
+                Navigator.pop(context, adjustedFood.toMap());
+              }
             },
-            child: const Text('Add Food'),
+            child: const Text('Add'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                  color: Colors.white70, fontWeight: FontWeight.w500)),
+          Text(value, style: const TextStyle(color: Colors.white)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    if (_errorMessage != null) {
+      return Center(
+          child: Text(_errorMessage!,
+              style: const TextStyle(color: Colors.white)));
+    }
+
+    if (_searchResults.isEmpty && !_isSearching) {
+      return const Center(
+          child: Text(
+        'No results found',
+        style: TextStyle(color: Colors.white),
+      ));
+    }
+
+    return ListView.separated(
+      itemCount: _searchResults.length,
+      separatorBuilder: (_, __) => const Divider(
+        color: Colors.grey,
+        height: 1,
+      ),
+      itemBuilder: (context, index) {
+        final food = _searchResults[index];
+        return ListTile(
+          tileColor: Colors.grey[800],
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          title: Text(
+            food.name,
+            style: const TextStyle(color: Colors.white),
+          ),
+          subtitle: Text(
+            '${food.mass.round()}g • ${food.calories.round()} kcal',
+            style: const TextStyle(color: Colors.white),
+          ),
+          trailing: const Icon(Icons.add_circle_outline),
+          onTap: () => _handleFoodSelection(food, context),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.grey[900], // BG colour for search sheet
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _searchController,
+              autofocus: true,
+              style: const TextStyle(color: Colors.white), // Input text color
+              cursorColor: Colors.white,
+              decoration: InputDecoration(
+                labelText: 'Search food database',
+                labelStyle: const TextStyle(color: Colors.white),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () => _performSearch(_searchController.text),
+                ),
+              ),
+              onSubmitted: _performSearch,
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _isSearching
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ))
+                  : _buildSearchResults(),
+            ),
+          ],
+        ),
       ),
     );
   }
