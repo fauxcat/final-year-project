@@ -28,11 +28,13 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildNavigationButton(
+                  // Food page button
                   context: context,
                   label: 'Food',
                   onPressed: () => _navigateToFoodLog(context),
                 ),
                 _buildNavigationButton(
+                  // Exercise page button
                   context: context,
                   label: 'Exercise',
                   onPressed: () => _navigateToExerciseLog(context),
@@ -45,7 +47,7 @@ class HomeScreen extends StatelessWidget {
             const _OverviewBar(calories: 1800, goal: 2000),
             const Spacer(),
 
-            // Placeholder end log button (non-functional)
+            // Placeholder end log button (non-functional, considering scrapping)
             const Center(
               child: ElevatedButton(
                 onPressed: null, // Disabled for now

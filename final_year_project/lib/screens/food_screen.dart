@@ -5,6 +5,9 @@ import '../models/nutrition_goals.dart';
 import '../services/hive_service.dart';
 import '../services/open_food_facts_service.dart';
 
+// Food logging screen
+// Handles food item CRUD operations with Hive db and Food DB API integration
+
 class FoodScreen extends StatefulWidget {
   const FoodScreen({super.key});
 
@@ -13,16 +16,18 @@ class FoodScreen extends StatefulWidget {
 }
 
 class _FoodScreenState extends State<FoodScreen> {
-  late List<FoodItem> _foodItems;
-  late NutritionGoals _goals;
-  final OpenFoodFactsService _apiService = OpenFoodFactsService();
+  late List<FoodItem> _foodItems; // Local cache of food entries
+  late NutritionGoals _goals; // User set nutrition goals
+  final OpenFoodFactsService _apiService =
+      OpenFoodFactsService(); // Food DB API
 
   @override
   void initState() {
     super.initState();
-    _loadDailyData();
+    _loadDailyData(); // Initialise data from Hive db
   }
 
+  // Loads current date's data from Hive
   void _loadDailyData() {
     final currentDate = HiveService.currentDate;
     setState(() {
@@ -31,6 +36,7 @@ class _FoodScreenState extends State<FoodScreen> {
     });
   }
 
+  // Calculate total calories and macronutrients from food items
   Map<String, double> _calculateTotals() {
     return {
       'calories': _foodItems.fold(0, (sum, item) => sum + item.calories),
@@ -50,22 +56,27 @@ class _FoodScreenState extends State<FoodScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
-            onPressed: _showHelpDialog,
+            onPressed: _showHelpDialog, // Help alert pop-up
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addFoodItem,
+        onPressed: _addFoodItem, // Add food button (should be updated)
         child: const Icon(Icons.add),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Calorie progress header
             _buildCalorieHeader(totals),
             const SizedBox(height: 20),
+
+            // Food items list
             _buildFoodList(),
             const SizedBox(height: 20),
+
+            // Macronutrient progress bars
             _buildMacroNutrients(totals),
             const Spacer(),
           ],
@@ -73,6 +84,8 @@ class _FoodScreenState extends State<FoodScreen> {
       ),
     );
   }
+
+  // Building above widgets
 
   Widget _buildCalorieHeader(Map<String, double> totals) {
     return Center(
@@ -83,6 +96,7 @@ class _FoodScreenState extends State<FoodScreen> {
     );
   }
 
+  // Scrollable food list
   Widget _buildFoodList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,6 +111,7 @@ class _FoodScreenState extends State<FoodScreen> {
     );
   }
 
+  // Indivudal rows for each food item
   Widget _foodItemRow(FoodItem item) {
     return InkWell(
       onTap: () => _showItemOptions(item),
@@ -115,6 +130,7 @@ class _FoodScreenState extends State<FoodScreen> {
     );
   }
 
+  // Macronutrient progress bars
   Widget _buildMacroNutrients(Map<String, double> totals) {
     return Column(
       children: [
@@ -130,6 +146,7 @@ class _FoodScreenState extends State<FoodScreen> {
     );
   }
 
+  // Individual row for macronutrient progress visualisation
   Widget _buildMacroRow(String type, double current, double goal) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -160,6 +177,9 @@ class _FoodScreenState extends State<FoodScreen> {
     );
   }
 
+  // Food item management
+
+  // Adds new food via modal bottom sheet search interface
   void _addFoodItem() async {
     final newFood = await showModalBottomSheet<FoodItem>(
       context: context,
@@ -168,22 +188,27 @@ class _FoodScreenState extends State<FoodScreen> {
     );
 
     if (newFood != null) {
+      // Add food item to Hive db with current date
       final foodWithDate = newFood.copyWith(
         date: DateTime.now(),
         key: null,
       );
       await HiveService.addFoodItem(foodWithDate);
-      _loadDailyData();
+      _loadDailyData(); // Reload UI after adding new food
     }
   }
 
+  // Edits existing food item entry
   void _showItemOptions(FoodItem item) async {
+    // Controller for mass text field
     final TextEditingController massController = TextEditingController(
       text: item.mass.toStringAsFixed(0),
     );
 
+    // Track any changes locally
     FoodItem currentItem = item;
 
+    // Show dialog for editing item
     final updatedItem = await showDialog<FoodItem>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -198,20 +223,22 @@ class _FoodScreenState extends State<FoodScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Food details
                   _buildNutritionRow(
                       'Calories', '${item.calories.round()} kCal'),
                   _buildNutritionRow('Protein', '${item.protein.round()} g'),
                   _buildNutritionRow('Carbs', '${item.carbs.round()} g'),
                   _buildNutritionRow('Fats', '${item.fats.round()} g'),
                   const SizedBox(height: 20),
+                  // Edit mass
                   TextField(
                     controller: massController,
                     style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Mass (grams)',
-                      labelStyle: const TextStyle(color: Colors.white),
-                      border: const OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.all(12),
+                      labelStyle: TextStyle(color: Colors.white),
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.all(12),
                     ),
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
@@ -232,6 +259,7 @@ class _FoodScreenState extends State<FoodScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Delete item
                 TextButton(
                   onPressed: () async {
                     if (currentItem.key != null) {
@@ -243,6 +271,7 @@ class _FoodScreenState extends State<FoodScreen> {
                   child: const Text('Delete',
                       style: TextStyle(color: Colors.red, fontSize: 16)),
                 ),
+                // Save updated item
                 TextButton(
                   onPressed: () => Navigator.pop(context, currentItem),
                   child: const Text('Save',
@@ -255,6 +284,7 @@ class _FoodScreenState extends State<FoodScreen> {
       ),
     );
 
+    // Persist changes if saved
     if (updatedItem != null && updatedItem.key != null) {
       await HiveService.updateFoodItem(updatedItem);
       _loadDailyData();
@@ -276,6 +306,7 @@ class _FoodScreenState extends State<FoodScreen> {
     );
   }
 
+  // Shows usage instructions for the food screen
   void _showHelpDialog() {
     showDialog(
       context: context,
@@ -330,6 +361,8 @@ class _FoodScreenState extends State<FoodScreen> {
   }
 }
 
+// Food search modal bottom sheet
+
 class AddFoodSheet extends StatefulWidget {
   final OpenFoodFactsService apiService;
 
@@ -340,11 +373,13 @@ class AddFoodSheet extends StatefulWidget {
 }
 
 class _AddFoodSheetState extends State<AddFoodSheet> {
+  // Manages food search state
   final TextEditingController _searchController = TextEditingController();
   List<FoodItem> _searchResults = [];
   bool _isSearching = false;
   String? _errorMessage;
 
+  // Executes API search
   Future<void> _performSearch(String query) async {
     setState(() {
       _isSearching = true;
@@ -366,6 +401,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
     }
   }
 
+  // Handle food selection after search and mass input
   Future<FoodItem?> _handleFoodSelection(
       FoodItem food, BuildContext context) async {
     final TextEditingController massController =
@@ -380,6 +416,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Displays food nutrition info after selection
             _buildNutritionInfoRow(
                 'Calories / 100g', '${food.caloriesPer100g.round()} kcal'),
             _buildNutritionInfoRow(
@@ -423,6 +460,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
     );
   }
 
+  // Builds nutrition info row for food search results
   Widget _buildNutritionInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -438,6 +476,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
     );
   }
 
+  // Builds search results list
   Widget _buildSearchResults() {
     if (_errorMessage != null) {
       return Center(
@@ -484,6 +523,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Search bar input
             TextField(
               controller: _searchController,
               autofocus: true,
@@ -501,6 +541,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
               onSubmitted: _performSearch,
             ),
             const SizedBox(height: 16),
+            // Loading/Search results list/Error state
             Expanded(
               child: _isSearching
                   ? const Center(

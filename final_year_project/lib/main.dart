@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // To set window size
-import 'services/hive_service.dart'; // To initialise Hive
+import 'services/hive_service.dart'; // To initialise hive db
 import 'screens/home_screen.dart'; // To load to home screen on startup
 
 void main() async {
+  // Initialise Flutter engine
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Lock device to portrait mode (may not be needed idk)
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  await HiveService.init(); // Initialize Hive
+  // Initialize hive db
+  await HiveService.init();
 
   runApp(const FitnessTrackerApp());
 }
@@ -21,7 +24,7 @@ class FitnessTrackerApp extends StatelessWidget {
       title: 'Fitness Tracker',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // Lots of styling, not important
+        // App-wide theming config - Dark-mode focused
         primarySwatch: Colors.grey,
         scaffoldBackgroundColor: const Color.fromARGB(255, 26, 26, 26),
         appBarTheme: const AppBarTheme(
@@ -33,7 +36,7 @@ class FitnessTrackerApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.white),
         ),
         useMaterial3: true,
-        // Customize button themes
+        // Buttom theming
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey[800],
@@ -52,12 +55,12 @@ class FitnessTrackerApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const MainNavigationWrapper(),
+      home: const MainNavigationWrapper(), // Navigation manager
     );
   }
 }
 
-// Wrapper to manage navigation state
+// Bottom nav and screen manager
 class MainNavigationWrapper extends StatefulWidget {
   const MainNavigationWrapper({super.key});
 
@@ -70,7 +73,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 
   // List of screens
   final List<Widget> _screens = [
-    const HomeScreen(),
+    const HomeScreen(), // Main/home/dashboard screen
     const PlaceholderScreen(title: 'Progress'), // Placeholder for progress
     const PlaceholderScreen(title: 'Goals'), // Placeholder for goals
   ];
