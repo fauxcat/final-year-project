@@ -9,7 +9,9 @@ import '../services/open_food_facts_service.dart';
 // Handles food item CRUD operations with Hive db and Food DB API integration
 
 class FoodScreen extends StatefulWidget {
-  const FoodScreen({super.key});
+  final DateTime selectedDate;
+
+  const FoodScreen({super.key, required this.selectedDate});
 
   @override
   State<FoodScreen> createState() => _FoodScreenState();
@@ -29,9 +31,8 @@ class _FoodScreenState extends State<FoodScreen> {
 
   // Loads current date's data from Hive
   void _loadDailyData() {
-    final currentDate = HiveService.currentDate;
     setState(() {
-      _foodItems = HiveService.getDailyFoodItems(currentDate);
+      _foodItems = HiveService.getDailyFoodItems(widget.selectedDate);
       _goals = HiveService.currentGoals;
     });
   }
@@ -190,11 +191,14 @@ class _FoodScreenState extends State<FoodScreen> {
     if (newFood != null) {
       // Add food item to Hive db with current date
       final foodWithDate = newFood.copyWith(
-        date: DateTime.now(),
+        date: widget.selectedDate,
         key: null,
       );
       await HiveService.addFoodItem(foodWithDate);
       _loadDailyData(); // Reload UI after adding new food
+      if (mounted) {
+        Navigator.pop(context, true); // Pass true to say updated data
+      }
     }
   }
 
@@ -288,6 +292,9 @@ class _FoodScreenState extends State<FoodScreen> {
     if (updatedItem != null && updatedItem.key != null) {
       await HiveService.updateFoodItem(updatedItem);
       _loadDailyData();
+      if (mounted) {
+        Navigator.pop(context, true); // Pass true to say updated data
+      }
     }
   }
 
