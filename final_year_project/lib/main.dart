@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // To set window size
 import 'services/hive_service.dart'; // To initialise hive db
 import 'screens/home_screen.dart'; // To load to home screen on startup
+import 'screens/goals_screen.dart'; // To load goals screen
 
 void main() async {
   // Initialise Flutter engine
@@ -45,13 +46,13 @@ class FitnessTrackerApp extends StatelessWidget {
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: Colors.grey[300],
+            foregroundColor: Colors.grey,
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.grey[300],
-            side: BorderSide(color: Colors.grey[700]!),
+            foregroundColor: Colors.grey,
+            side: const BorderSide(color: Colors.grey),
           ),
         ),
       ),
@@ -75,7 +76,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   final List<Widget> _screens = [
     const HomeScreen(), // Main/home/dashboard screen
     const PlaceholderScreen(title: 'Progress'), // Placeholder for progress
-    const PlaceholderScreen(title: 'Goals'), // Placeholder for goals
+    const GoalsScreen(), // Placeholder for goals
   ];
 
   void _onItemTapped(int index) {
@@ -105,7 +106,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   }
 }
 
-// Placeholder screen for progress and goals
+// Placeholder screen for progress
 class PlaceholderScreen extends StatelessWidget {
   final String title;
 
@@ -115,7 +116,7 @@ class PlaceholderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        '$title Screen',
+        '$title Screen (WIP)',
         style: const TextStyle(color: Colors.white, fontSize: 24),
       ),
     );
