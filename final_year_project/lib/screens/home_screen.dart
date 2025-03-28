@@ -12,16 +12,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late DateTime _currentDate;
+  late DateTime _currentDate; // Current date for tracking
 
   // Date selector button methods
   void _previousDay() {
     setState(() {
       _currentDate = _currentDate.subtract(const Duration(days: 1));
-      HiveService.setCurrentDate(_currentDate);
+      HiveService.setCurrentDate(_currentDate); // Persist date change
     });
   }
 
+  // Increment date by 1, but not beyond present
   void _nextDay() {
     final now = DateTime.now();
     if (_currentDate.isBefore(now)) {
@@ -36,15 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  int _calculateCalories() {
-    final items = HiveService.getDailyFoodItems(_currentDate);
-    return items.fold(0, (sum, item) => sum + item.calories.round());
-  }
-
   @override
   void initState() {
     super.initState();
-    _currentDate = HiveService.currentDate;
+    _currentDate = HiveService.currentDate; // Initialise with stored data
   }
 
   Widget build(BuildContext context) {
@@ -102,14 +98,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Placeholder overview bar (static data)
-            Center(
-                child: _OverviewBar(
-                    calories: _calculateCalories(),
-                    goal: HiveService.currentGoals.calories.round())),
+            // Overview section (calories / goal)
+            Center(child: _OverviewBar(date: _currentDate)),
             const SizedBox(height: 16),
 
-            // Workout status
+            // Exercise status text
             Center(
               child: Container(
                 padding: const EdgeInsets.all(12),
@@ -117,9 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey),
                 ),
-                child: const Text(
-                  'You haven\'t worked out today!',
-                  style: TextStyle(fontSize: 16),
+                child: Text(
+                  _getExerciseStatus(),
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
             ),
@@ -163,41 +156,50 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Button nav methods
+  // Food navigation handler
   void _navigateToFoodLog(BuildContext context) async {
-    final needsRefresh = await Navigator.push<bool>(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => FoodScreen(selectedDate: _currentDate),
       ),
     );
-
-    if (needsRefresh == true) {
-      setState(() {}); // Force refresh with updated data
-    }
+    setState(() {}); // Force refresh after returning
   }
 
-  void _navigateToExerciseLog(BuildContext context) {
-    Navigator.push(
+  // Exercise navigation handler
+  void _navigateToExerciseLog(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => ExerciseScreen(selectedDate: _currentDate)),
+        builder: (context) => ExerciseScreen(selectedDate: _currentDate),
+      ),
     );
+    setState(() {}); // Force refresh after returning
+  }
+
+  // Exercise status text
+  String _getExerciseStatus() {
+    final exercises = HiveService.getDailyExercises(_currentDate);
+    if (exercises.isEmpty) return 'You haven\'t worked out today!';
+
+    final totalSets =
+        exercises.fold(0, (sum, exercise) => sum + exercise.sets.length);
+    return 'You have completed ${exercises.length} exercises and $totalSets sets today';
   }
 }
 
-// Placeholder overview widget
+// Progress bar and text for daily overview (food section)
 class _OverviewBar extends StatelessWidget {
-  final int calories;
-  final int goal;
+  final DateTime date;
 
-  const _OverviewBar({
-    required this.calories,
-    required this.goal,
-  });
+  const _OverviewBar({required this.date});
 
   @override
   Widget build(BuildContext context) {
+    final calories = HiveService.getDailyFoodItems(date)
+        .fold(0, (sum, item) => sum + item.calories.round());
+    final goal = HiveService.currentGoals.calories.round();
     final progress = calories / goal;
 
     return Column(

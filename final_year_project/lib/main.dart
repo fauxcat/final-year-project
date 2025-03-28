@@ -10,7 +10,7 @@ void main() async {
 
   // Lock device to portrait mode (may not be needed idk)
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  // Initialize hive db
+  // Initialise hive db
   await HiveService.init();
 
   runApp(const FitnessTrackerApp());
@@ -46,7 +46,7 @@ class FitnessTrackerApp extends StatelessWidget {
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: Colors.grey,
+            foregroundColor: Colors.grey[300],
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
@@ -73,10 +73,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   int _selectedIndex = 0; // Start with Home selected
 
   // List of screens
-  final List<Widget> _screens = [
-    const HomeScreen(), // Main/home/dashboard screen
-    const PlaceholderScreen(title: 'Progress'), // Placeholder for progress
-    const GoalsScreen(), // Placeholder for goals
+  final List<Widget> _screens = const [
+    HomeScreen(), // Main/home/dashboard screen
+    PlaceholderScreen(title: 'Progress'), // Placeholder for progress
+    GoalsScreen(), // Placeholder for goals
   ];
 
   void _onItemTapped(int index) {

@@ -1,0 +1,18 @@
+const List<String> predefinedExercises = [
+  'Barbell Squats',
+  'Deadlift',
+  'Bench Press',
+  'Overhead Press',
+  'Pull-ups',
+  'Bent-over Row',
+  'Lunges',
+  'Leg Press',
+  'Lat Pulldown',
+  'Cable Row',
+  'Dumbbell Curl',
+  'Tricep Pushdown',
+  'Chest Fly',
+  'Shoulder Shrug',
+  'Leg Curl',
+  'Calf Raise',
+];

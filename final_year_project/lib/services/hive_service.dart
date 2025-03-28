@@ -1,11 +1,13 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/food_item.dart';
 import '../models/nutrition_goals.dart';
+import '../models/exercise.dart';
 
 class HiveService {
   // Hive box names
   static const String foodBoxName = 'foodItems';
   static const String goalsBoxName = 'nutritionGoals';
+  static const String exerciseBoxName = 'exercises';
   static const String dateBoxName = 'currentDate';
 
   // Initialise hive and register adapters
@@ -13,10 +15,13 @@ class HiveService {
     await Hive.initFlutter();
     Hive.registerAdapter(FoodItemAdapter()); // Stores food items
     Hive.registerAdapter(NutritionGoalsAdapter()); // Stores nutrition goals
-    // Opens all boxes
+    Hive.registerAdapter(ExerciseAdapter()); // Stores exercise data
+    Hive.registerAdapter(ExerciseSetAdapter()); // Stores exercise sets
+// Opens all boxes
     await Hive.openBox<FoodItem>(foodBoxName);
     await Hive.openBox<NutritionGoals>(goalsBoxName);
     await Hive.openBox<DateTime>(dateBoxName);
+    await Hive.openBox<Exercise>(exerciseBoxName);
   }
 
   // Food item operations
@@ -43,15 +48,21 @@ class HiveService {
 
   // Get food items for a specific date (will be used for daily tracking)
   static List<FoodItem> getDailyFoodItems(DateTime date) {
-    return foodBox.values
-        .where((item) =>
-            item.date.year == date.year &&
-            item.date.month == date.month &&
-            item.date.day == date.day)
-        .toList()
-        .map((item) => item.copyWith(
-            key: foodBox.keyAt(foodBox.values.toList().indexOf(item))))
-        .toList();
+    try {
+      return foodBox.values
+          .where((item) =>
+              item.date.year == date.year &&
+              item.date.month == date.month &&
+              item.date.day == date.day)
+          .toList()
+          .map((item) => item.copyWith(
+              key: foodBox.keyAt(foodBox.values.toList().indexOf(item))))
+          .toList();
+    } catch (e) {
+      // In case of errors return empty list
+      print('Error fetching food items: $e');
+      return [];
+    }
   }
 
   // Nutrition goals operations
@@ -75,4 +86,28 @@ class HiveService {
   static DateTime get currentDate => dateBox.get('current') ?? DateTime.now();
   static Future<void> setCurrentDate(DateTime date) =>
       dateBox.put('current', date);
+
+  // Exercise operations
+  static Box<Exercise> get exerciseBox => Hive.box<Exercise>(exerciseBoxName);
+
+  static Future<int> addExercise(Exercise exercise) async {
+    final int key = await exerciseBox.add(exercise);
+    return key;
+  }
+
+  static Future<void> deleteExercise(int key) async {
+    await exerciseBox.delete(key);
+  }
+
+  static List<Exercise> getDailyExercises(DateTime date) {
+    return exerciseBox
+        .toMap()
+        .entries
+        .where((entry) =>
+            entry.value.date.year == date.year &&
+            entry.value.date.month == date.month &&
+            entry.value.date.day == date.day)
+        .map((entry) => entry.value.copyWith(key: entry.key))
+        .toList();
+  }
 }
