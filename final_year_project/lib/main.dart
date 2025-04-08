@@ -3,6 +3,7 @@ import 'package:flutter/services.dart'; // To set window size
 import 'services/hive_service.dart'; // To initialise hive db
 import 'screens/home_screen.dart'; // To load to home screen on startup
 import 'screens/goals_screen.dart'; // To load goals screen
+import 'screens/progress_screen.dart'; // To load progress screen
 
 void main() async {
   // Initialise Flutter engine
@@ -75,8 +76,8 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   // List of screens
   final List<Widget> _screens = const [
     HomeScreen(), // Main/home/dashboard screen
-    PlaceholderScreen(title: 'Progress'), // Placeholder for progress
-    GoalsScreen(), // Placeholder for goals
+    ProgressScreen(), // Progress screen
+    GoalsScreen(), // Goal setting screen
   ];
 
   void _onItemTapped(int index) {

@@ -47,6 +47,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
               _buildGoalField('Protein (g)', _proteinController),
               _buildGoalField('Carbohydrates (g)', _carbsController),
               _buildGoalField('Fats (g)', _fatsController),
+              // Safety guidelines card
+              _buildSafetyGuidelines(),
               const SizedBox(height: 20),
               // Save button with validation
               ElevatedButton(
@@ -63,7 +65,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
   // Method to standardise goal input fields
   Widget _buildGoalField(String label, TextEditingController controller) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      padding: const EdgeInsets.symmetric(vertical: 20.0),
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
@@ -83,20 +85,125 @@ class _GoalsScreenState extends State<GoalsScreen> {
     );
   }
 
-  // Save goals to Hive after validation
-  void _saveGoals() {
+  Widget _buildSafetyGuidelines() {
+    return Card(
+      color: Colors.black, //
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.blue),
+                SizedBox(width: 8),
+                Text(
+                  'Nutrition Safety Guidelines',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.blue,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Recommended Daily Intake:',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            const Text('• Women: 1,600 - 2,400 kCal'),
+            const Text('• Men: 2,000 - 3,000 kCal'),
+            const SizedBox(height: 12),
+            Text(
+              'Important:',
+              style: TextStyle(
+                color: Colors.red[800],
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Calorie intake below 1,200 kCal for women or 1,500 kCal for men '
+              'should only be undertaken with medical supervision. '
+              '\n\nExtreme goals can lead to serious health consequences.',
+              style: TextStyle(color: Colors.red[800]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Show warning dialog if goals are outside recommended range
+  void _saveGoals() async {
     if (_formKey.currentState!.validate()) {
-      NutritionGoals newGoals = NutritionGoals(
-        calories: double.parse(_caloriesController.text),
-        protein: double.parse(_proteinController.text),
-        carbs: double.parse(_carbsController.text),
-        fats: double.parse(_fatsController.text),
-      );
-      HiveService.saveGoals(newGoals);
-      // Show confirmation message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Goals updated!')),
-      );
+      final calories = double.parse(_caloriesController.text);
+
+      if (calories < 1500) {
+        await _showWarningDialog(
+          'Extremely Low Calorie Goal',
+          'Goals below 1,200 kCal/day are generally not recommended without medical supervision. '
+              '\n\nThis can lead to nutrient deficiencies and other health risks.',
+        );
+      } else if (calories > 3000) {
+        await _showWarningDialog(
+          'High Calorie Goal',
+          'Goals above 3,000 kCal/day should be set with caution. '
+              '\n\nEnsure this aligns with your activity level and health goals.',
+        );
+      }
+
+      _saveConfirmed();
     }
+  }
+
+  // Saving goals to database after validation and warnings
+  void _saveConfirmed() {
+    NutritionGoals newGoals = NutritionGoals(
+      calories: double.parse(_caloriesController.text),
+      protein: double.parse(_proteinController.text),
+      carbs: double.parse(_carbsController.text),
+      fats: double.parse(_fatsController.text),
+    );
+    HiveService.saveGoals(newGoals);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Goals updated!'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Show warning dialog for extreme goals
+  Future<void> _showWarningDialog(String title, String message) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[850],
+          title: Text(
+            title,
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(color: Colors.white),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                'I Understand',
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
