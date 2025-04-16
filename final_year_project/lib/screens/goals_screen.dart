@@ -114,7 +114,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 8),
-            const Text('• Women: 1,600 - 2,400 kCal'),
+            const Text('• Women: 1,500 - 2,500 kCal'),
             const Text('• Men: 2,000 - 3,000 kCal'),
             const SizedBox(height: 12),
             Text(
@@ -126,7 +126,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Calorie intake below 1,200 kCal for women or 1,500 kCal for men '
+              'Calorie intake below the recommended intakes '
               'should only be undertaken with medical supervision. '
               '\n\nExtreme goals can lead to serious health consequences.',
               style: TextStyle(color: Colors.red[800]),
@@ -145,7 +145,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
       if (calories < 1500) {
         await _showWarningDialog(
           'Extremely Low Calorie Goal',
-          'Goals below 1,200 kCal/day are generally not recommended without medical supervision. '
+          'Goals below 1,500 kCal/day are generally not recommended without medical supervision. '
               '\n\nThis can lead to nutrient deficiencies and other health risks.',
         );
       } else if (calories > 3000) {
