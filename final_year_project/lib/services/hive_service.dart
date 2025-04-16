@@ -75,10 +75,10 @@ class HiveService {
   static NutritionGoals get currentGoals =>
       goalsBox.get('current') ??
       NutritionGoals(
-        calories: 2000,
-        carbs: 195,
-        protein: 130,
-        fats: 60,
+        calories: 2500,
+        carbs: 333,
+        protein: 56,
+        fats: 80,
       );
 
   // Date tracking
