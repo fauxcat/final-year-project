@@ -397,7 +397,6 @@ class AddSetDialog extends StatelessWidget {
 }
 
 class AddExerciseSheet extends StatelessWidget {
-  final TextEditingController _searchController = TextEditingController();
   final List<String> filteredExercises =
       predefinedExercises; // Uses exercise_data.dart - should be improved
 
@@ -410,17 +409,6 @@ class AddExerciseSheet extends StatelessWidget {
       color: Colors.grey[900],
       child: Column(
         children: [
-          // Search input field (should probably remove and just have list)
-          TextField(
-            controller: _searchController,
-            decoration: const InputDecoration(
-              labelText: 'Search Exercises',
-              labelStyle: TextStyle(color: Colors.white),
-              suffixIcon: Icon(Icons.search, color: Colors.white),
-            ),
-            style: const TextStyle(color: Colors.white),
-            onChanged: (value) {},
-          ),
           // Exercise list
           Expanded(
             child: ListView.builder(
