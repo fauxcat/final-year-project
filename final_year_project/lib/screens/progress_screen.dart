@@ -86,6 +86,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   // Calculate progress data between selected dates
   void _generateProgress() {
+    assert(_startDate != null, 'Start date must be selected');
+    assert(_endDate != null, 'End date must be selected');
+    assert(!_endDate!.isBefore(_startDate!),
+        'End date cannot be before start date');
     if (_startDate == null || _endDate == null) return;
     if (_endDate!.isBefore(_startDate!)) return;
 
@@ -111,7 +115,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
       currentDay = currentDay.add(const Duration(days: 1));
     }
-
+    assert(totalCalories >= 0, 'Total calories cannot be negative');
+    assert(totalExercises >= 0, 'Total exercises cannot be negative');
+    assert(totalSets >= 0, 'Total sets cannot be negative');
     // Calculate days between dates
     final daysBetween = _endDate!.difference(_startDate!).inDays + 1;
 

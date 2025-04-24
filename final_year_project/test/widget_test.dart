@@ -8,23 +8,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:final_year_project/main.dart';
+import 'package:final_year_project/screens/progress_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const FitnessTrackerApp());
+  testWidgets('Start date selection updates state',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: ProgressScreen()));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify initial state
+    expect(find.text('Start Date'), findsOneWidget);
+    expect(find.text('Select Date'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Simulate tapping the start date button
+    await tester.tap(find.text('Start Date'));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Simulate selecting a date
+    await tester.tap(find.text('OK')); // Assuming a date picker is shown
+    await tester.pumpAndSettle();
+
+    // Verify state is updated
+    expect(find.textContaining('MMM dd, yyyy'), findsOneWidget);
   });
 }

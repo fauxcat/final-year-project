@@ -4,6 +4,7 @@ import '../models/food_item.dart';
 class OpenFoodFactsService {
   // Main method to search food with API
   Future<List<FoodItem>> searchFoods(String query) async {
+    assert(query.isNotEmpty, 'Search query cannot be empty');
     try {
       // Configure search parameters
       final parameters = ProductSearchQueryConfiguration(
@@ -29,6 +30,10 @@ class OpenFoodFactsService {
       // API response -> FoodItem object
       return result.products?.map((product) {
             final nutriments = product.nutriments;
+            assert(
+                product.productName != null, 'Product name should not be null');
+            assert(nutriments != null,
+                'Nutritional information should not be null');
             return FoodItem(
               name: product.productName?.trim() ?? 'Unnamed Food',
               mass: 100, // Serving size defaults to 100g
