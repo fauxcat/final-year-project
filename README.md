@@ -12,8 +12,10 @@ Please ensure you have the Flutter SDK along with the Flutter and Dart extension
 
 ## Getting Started
 
-1. Run "flutter pub get" in the terminal
+1. Clone this repo.
 
-2. Navigate to lib/main.dart and run the application with a device of your choice.
+2. Run "flutter doctor" and "flutter pub get" in the terminal.
+
+3. Navigate to lib/main.dart and run the application (in VS Code) with a device of your choice.
 
 
