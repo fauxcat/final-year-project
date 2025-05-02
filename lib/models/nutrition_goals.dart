@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'nutrition_goals.g.dart';
 
-// Used for user nutrition goals (UNIMPLEMENTED)
+// Used for user nutrition goals
 @HiveType(typeId: 1) // this id identifies the NutritionGoals class in Hive
 class NutritionGoals {
   @HiveField(0)
